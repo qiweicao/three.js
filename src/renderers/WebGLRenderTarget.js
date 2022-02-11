@@ -44,6 +44,7 @@ class WebGLRenderTarget extends EventDispatcher {
 		 * see WebGlTextures.setupRenderBufferStorage
 		 * */
 		platform.properties && ( this.useDEPTH_COMPONENT24 = platform.properties.rendertargetUseDEPTH_COMPONENT24 );
+		this.samples = options.samples !== undefined ? options.samples : 0;
 
 	}
 
@@ -104,6 +105,8 @@ class WebGLRenderTarget extends EventDispatcher {
 		this.stencilBuffer = source.stencilBuffer;
 
 		if ( source.depthTexture !== null ) this.depthTexture = source.depthTexture.clone();
+
+		this.samples = source.samples;
 
 		return this;
 
