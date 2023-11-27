@@ -1568,6 +1568,11 @@ class Texture extends EventDispatcher {
 		this.isRenderTargetTexture = false; // indicates whether a texture belongs to a render target or not
 		this.needsPMREMUpdate = false; // indicates whether this texture should be processed by PMREMGenerator or not (only relevant for render target textures)
 
+		// In WebGL2, sRGB textures can be trancoded to Linear automatically, but reference to this issue: https://github.com/mrdoob/three.js/issues/26183
+		// there're performance issues when doing this, so you can set the sRGBToLinearWithShader to false to transcode the sRGB texture to Linear with
+		// shader, especially to those textures that are updated in each frame
+		this.sRGBToLinearWithShader = ! Texture.useSrgbTextures;
+
 	}
 
 	updateMatrix() {
@@ -22494,7 +22499,7 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 	}
 
-	function getInternalFormat( internalFormatName, glFormat, glType, encoding ) {
+	function getInternalFormat( internalFormatName, glFormat, glType, encoding, sRGBToLinearWithShader = ! Texture.useSrgbTextures ) {
 
 		if ( isWebGL2 === false ) return glFormat;
 
@@ -22528,7 +22533,7 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 			if ( glType === 5126 ) internalFormat = 34836;
 			if ( glType === 5131 ) internalFormat = 34842;
-			if ( glType === 5121 ) internalFormat = ( isWebGL2 && Texture.useSrgbTextures && encoding === sRGBEncoding ) ? 35907 : 32856;
+			if ( glType === 5121 ) internalFormat = ( isWebGL2 && encoding === sRGBEncoding && ! sRGBToLinearWithShader ) ? 35907 : 32856;
 			if ( glType === 32819 ) internalFormat = 32854;
 			if ( glType === 32820 ) internalFormat = 32855;
 
@@ -22925,7 +22930,7 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 			glFormat = utils.convert( texture.format, texture.encoding );
 
 		let glType = utils.convert( texture.type ),
-			glInternalFormat = getInternalFormat( texture.internalFormat, glFormat, glType, texture.encoding );
+			glInternalFormat = getInternalFormat( texture.internalFormat, glFormat, glType, texture.encoding, texture.sRGBToLinearWithShader );
 
 		setTextureParameters( textureType, texture, supportsMips );
 
@@ -23284,7 +23289,7 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 			supportsMips = isPowerOfTwo$1( image ) || isWebGL2,
 			glFormat = utils.convert( texture.format, texture.encoding ),
 			glType = utils.convert( texture.type ),
-			glInternalFormat = getInternalFormat( texture.internalFormat, glFormat, glType, texture.encoding );
+			glInternalFormat = getInternalFormat( texture.internalFormat, glFormat, glType, texture.encoding, texture.sRGBToLinearWithShader );
 
 		const useTexStorage = ( isWebGL2 && texture.isVideoTexture !== true );
 		const allocateMemory = ( textureProperties.__version === undefined );
@@ -23449,7 +23454,7 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 		const glFormat = utils.convert( texture.format, texture.encoding );
 		const glType = utils.convert( texture.type );
-		const glInternalFormat = getInternalFormat( texture.internalFormat, glFormat, glType, texture.encoding );
+		const glInternalFormat = getInternalFormat( texture.internalFormat, glFormat, glType, texture.encoding, texture.sRGBToLinearWithShader );
 		const renderTargetProperties = properties.get( renderTarget );
 
 		if ( ! renderTargetProperties.__hasExternalTextures ) {
@@ -23557,7 +23562,7 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 			const glFormat = utils.convert( texture.format, texture.encoding );
 			const glType = utils.convert( texture.type );
-			const glInternalFormat = getInternalFormat( texture.internalFormat, glFormat, glType, texture.encoding );
+			const glInternalFormat = getInternalFormat( texture.internalFormat, glFormat, glType, texture.encoding, texture.sRGBToLinearWithShader );
 			const samples = getRenderTargetSamples( renderTarget );
 
 			if ( isMultisample && renderTarget.useRenderbuffer ) {
@@ -23782,7 +23787,7 @@ function WebGLTextures( _gl, extensions, state, properties, capabilities, utils,
 
 					const glFormat = utils.convert( texture.format, texture.encoding );
 					const glType = utils.convert( texture.type );
-					const glInternalFormat = getInternalFormat( texture.internalFormat, glFormat, glType, texture.encoding );
+					const glInternalFormat = getInternalFormat( texture.internalFormat, glFormat, glType, texture.encoding, texture.sRGBToLinearWithShader );
 					const samples = getRenderTargetSamples( renderTarget );
 					_gl.renderbufferStorageMultisample( 36161, samples, glInternalFormat, renderTarget.width, renderTarget.height );
 
@@ -26667,7 +26672,7 @@ function WebGLRenderer( parameters = {} ) {
 
 		}
 
-		if ( capabilities.isWebGL2 && Texture.useSrgbTextures && map && map.isTexture && map.format === RGBAFormat && map.type === UnsignedByteType && map.encoding === sRGBEncoding ) {
+		if ( capabilities.isWebGL2 && map && map.isTexture && map.format === RGBAFormat && map.type === UnsignedByteType && map.encoding === sRGBEncoding && ! map.sRGBToLinearWithShader ) {
 
 			encoding = LinearEncoding; // disable inline decode for sRGB textures in WebGL 2
 
