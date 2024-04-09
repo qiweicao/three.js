@@ -1254,7 +1254,7 @@ function WebGLRenderer( parameters = {} ) {
 			const needsAntialias = _antialias === true && capabilities.isWebGL2 === true;
 			const hasColorBufferHalfFloat = extensions.has( 'EXT_color_buffer_half_float' ) || ( capabilities.isWebGL2 && extensions.has( 'EXT_color_buffer_float' ) );
 
-			_transmissionRenderTarget = new WebGLRenderTarget( 1, 1, {
+			_transmissionRenderTarget = new WebGLRenderTarget( 1024, 1024, {
 				generateMipmaps: true,
 				type: hasColorBufferHalfFloat ? HalfFloatType : UnsignedByteType,
 				minFilter: LinearMipmapLinearFilter,
