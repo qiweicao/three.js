@@ -17,6 +17,7 @@ export interface WebGLRenderTargetOptions {
     generateMipmaps?: boolean | undefined; // true;
     depthTexture?: DepthTexture | undefined;
     encoding?: TextureEncoding | undefined;
+    samples?: number | undefined; // 0
 }
 
 export class WebGLRenderTarget extends EventDispatcher {
