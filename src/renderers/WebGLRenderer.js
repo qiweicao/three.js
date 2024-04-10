@@ -11,8 +11,6 @@ import {
 	sRGBEncoding,
 	NoToneMapping,
 	LinearMipmapLinearFilter,
-	NearestFilter,
-	ClampToEdgeWrapping
 } from '../constants.js';
 import { platform } from '../platform.js';
 import { Frustum } from '../math/Frustum.js';
@@ -33,7 +31,6 @@ import { WebGLGeometries } from './webgl/WebGLGeometries.js';
 import { WebGLIndexedBufferRenderer } from './webgl/WebGLIndexedBufferRenderer.js';
 import { WebGLInfo } from './webgl/WebGLInfo.js';
 import { WebGLMorphtargets } from './webgl/WebGLMorphtargets.js';
-import { WebGLMultisampleRenderTarget } from './WebGLMultisampleRenderTarget.js';
 import { WebGLObjects } from './webgl/WebGLObjects.js';
 import { WebGLPrograms } from './webgl/WebGLPrograms.js';
 import { WebGLProperties } from './webgl/WebGLProperties.js';
@@ -48,7 +45,6 @@ import { WebGLUtils } from './webgl/WebGLUtils.js';
 import { WebXRManager } from './webxr/WebXRManager.js';
 import { WebGLMaterials } from './webgl/WebGLMaterials.js';
 import { createElementNS } from '../utils.js';
-import { Texture } from '../textures/Texture.js';
 
 function createCanvasElement() {
 
@@ -1256,17 +1252,13 @@ function WebGLRenderer( parameters = {} ) {
 		if ( _transmissionRenderTarget === null ) {
 
 			const needsAntialias = _antialias === true && capabilities.isWebGL2 === true;
-			const renderTargetType = needsAntialias ? WebGLMultisampleRenderTarget : WebGLRenderTarget;
 			const hasColorBufferHalfFloat = extensions.has( 'EXT_color_buffer_half_float' ) || ( capabilities.isWebGL2 && extensions.has( 'EXT_color_buffer_float' ) );
 
-			_transmissionRenderTarget = new renderTargetType( 1024, 1024, {
+			_transmissionRenderTarget = new WebGLRenderTarget( 1024, 1024, {
 				generateMipmaps: true,
 				type: hasColorBufferHalfFloat ? HalfFloatType : UnsignedByteType,
 				minFilter: LinearMipmapLinearFilter,
-				magFilter: NearestFilter,
-				wrapS: ClampToEdgeWrapping,
-				wrapT: ClampToEdgeWrapping,
-				useRenderToTexture: extensions.has( 'WEBGL_multisampled_render_to_texture' )
+				samples: needsAntialias ? 4 : 0
 			} );
 
 		}
@@ -1848,11 +1840,10 @@ function WebGLRenderer( parameters = {} ) {
 
 				// The multisample_render_to_texture extension doesn't work properly if there
 				// are midframe flushes and an external depth buffer. Disable use of the extension.
-				if ( renderTarget.useRenderToTexture ) {
+				if ( extensions.has( 'WEBGL_multisampled_render_to_texture' ) === true ) {
 
-					console.warn( 'render-to-texture extension was disabled because an external texture was provided' );
-					renderTarget.useRenderToTexture = false;
-					renderTarget.useRenderbuffer = true;
+					console.warn( 'THREE.WebGLRenderer: Render-to-texture extension was disabled because an external texture was provided' );
+					renderTargetProperties.__useRenderToTexture = false;
 
 				}
 
@@ -1921,7 +1912,7 @@ function WebGLRenderer( parameters = {} ) {
 				framebuffer = __webglFramebuffer[ activeCubeFace ];
 				isCube = true;
 
-			} else if ( renderTarget.useRenderbuffer ) {
+			} else if ( ( capabilities.isWebGL2 && renderTarget.samples > 0 ) && textures.useMultisampledRenderToTexture( renderTarget ) === false ) {
 
 				framebuffer = properties.get( renderTarget ).__webglMultisampledFramebuffer;
 

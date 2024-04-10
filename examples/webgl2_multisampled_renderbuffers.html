@@ -92,7 +92,7 @@
 				group = new THREE.Group();
 
 				const geometry = new THREE.SphereGeometry( 10, 64, 40 );
-				const material = new THREE.MeshLambertMaterial( { color: 0xee0808 } );
+				const material = new THREE.MeshLambertMaterial( {	color: 0xee0808 } );
 				const material2 = new THREE.MeshBasicMaterial( { color: 0xffffff, wireframe: true } );
 
 				for ( let i = 0; i < 10; i ++ ) {
@@ -127,7 +127,7 @@
 				//
 
 				const size = renderer.getDrawingBufferSize( new THREE.Vector2() );
-				const renderTarget = new THREE.WebGLMultisampleRenderTarget( size.width, size.height );
+				const renderTarget = new THREE.WebGLRenderTarget( size.width, size.height, { samples: 4 } );
 
 				const renderPass = new RenderPass( scene, camera );
 				const copyPass = new ShaderPass( CopyShader );
