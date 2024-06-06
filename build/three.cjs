@@ -19367,6 +19367,8 @@ function WebGLRenderer(parameters = {}) {
 
 	const _vector3 = new Vector3();
 
+	const _vector2 = new Vector2();
+
 	const _emptyScene = {
 		background: null,
 		fog: null,
@@ -20103,13 +20105,17 @@ function WebGLRenderer(parameters = {}) {
 		if (_transmissionRenderTarget === null) {
 			const needsAntialias = _antialias === true && capabilities.isWebGL2 === true;
 			const hasColorBufferHalfFloat = extensions.has('EXT_color_buffer_half_float') || capabilities.isWebGL2 && extensions.has('EXT_color_buffer_float');
-			_transmissionRenderTarget = new WebGLRenderTarget(1024, 1024, {
+			_transmissionRenderTarget = new WebGLRenderTarget(1, 1, {
 				generateMipmaps: true,
 				type: hasColorBufferHalfFloat ? HalfFloatType : UnsignedByteType,
 				minFilter: LinearMipmapLinearFilter,
 				samples: needsAntialias ? 4 : 0
 			});
 		}
+
+		_this.getDrawingBufferSize(_vector2);
+
+		_transmissionRenderTarget.setSize(_vector2.x, _vector2.y);
 
 		const currentRenderTarget = _this.getRenderTarget();
 
